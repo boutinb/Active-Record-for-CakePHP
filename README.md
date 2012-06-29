@@ -53,7 +53,7 @@ In the file ARPost.php:
     }
     ?>
 
-If you need to use the constructor:
+If you need to use the constructor:   
     <?php
     public function __construct(array $record, array $options = array()) {
        parent::__construct($record, $options);
