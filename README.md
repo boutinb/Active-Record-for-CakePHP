@@ -30,7 +30,8 @@ This behavior makes a difference between belongsTo and hasOne associations with 
 * with belongsTo and hasOne associations, the ActiveRecord object pointed by the association is derectly retrieved, and you can use
 directly: e.g. $post->Writer->WriterGroup
 * with hasMany and hasAndBelongsToMany associations, the ActiveRecordAssociation object is retrieved. The class of this object implements the IteratorAggregate, Countable, ArrayAccess interfaces so that you can use it as an array:
-e.g.: foreach ($post->Comments as $comment)
+e.g.:  
+foreach ($post->Comments as $comment)
 
 
 
