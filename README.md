@@ -35,9 +35,9 @@ foreach ($post->Comments as $comment);
 count($post->Comments);  
 $comments = $post->Comments; $first_comment = $comments[0];  
 But also, the ActiveRecordAssociation class has 3 functions:
-* $comments->add($new_comment);
-* $comments->remove($first_comment);
-* $comments->replace($first_comment, $new_comment);
+  * $comments->add($new_comment);
+  * $comments->remove($first_comment);
+  * $comments->replace($first_comment, $new_comment);
 
 In order for the developer to clearly see the difference beween the 2 kinds of associations, I advice to use a plural name for hasMany and hasAndBelongsToMany associations, and singular name for hasOne and belongsTo associations.
 
