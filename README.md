@@ -4,7 +4,10 @@ Active Record for CakePHP
 Installation
 ------------
 I wanted to build a state engine with CakePHP, and I realize that I needed a kind of Active Record pattern. 
-So I first build a behavior that allows me to retrieve objects in place of associative arrays.
+So I first built a behavior that allows me to retrieve objects in place of associative arrays.
+
+I have tested this only with cakePHP 2.x
+
 To use it:
 * Copy the ActiveRecordBehavior.php in your Behavior folder
 * Tell your model to use it: $actsAs = array('ActiveRecord' => array(<options>))
