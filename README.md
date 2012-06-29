@@ -60,12 +60,7 @@ If you need to use the constructor:
        ...
     }
     ?>
-    <?php
-    public function __construct(array $record, array $options = array()) {    
-        parent::__construct($record, $options);
-        ...
-    }
-    ?>
+    App::import('Model\Behavior', 'ActiveRecord');
 
 
 Then you can use $post->var and $post->func() in your code.  
