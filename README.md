@@ -4,7 +4,7 @@ Active Record for CakePHP
 Installation
 ------------
 I wanted to build a state engine with CakePHP, and I realize that I needed a kind of Active Record pattern. 
-So I first build a bahavior that allows me to retrieve objects in place of associative arrays.
+So I first build a behavior that allows me to retrieve objects in place of associative arrays.
 To use it:
 * Copy the ActiveRecordBehavior.php in your Behavior folder
 * Tell your model to use it: $actsAs = array('ActiveRecord' => array(<options>))
@@ -22,20 +22,22 @@ When you retrieve an object record, you can use it in this way: assume that you 
 * Comment (message) belongsTo Post
 * Tag (name) hasAndBelongsToMany Posts
 
-Call find('first') of find('all') to retrieve the Post records:
+Call find('first') of find('all') to retrieve the posts and with one post you can do the following:
 * $message = $post->message : this retrieves the message of the post
 * $post->message = 'Hallo' : this updates the message of the post
 * $writer = $post->Writer : this retrieves the writer ActiveRecord object
 * $comments = $post->Comments : this retrieves the ActiveRecordAssociation object
 
-This behavior makes a difference between belongsTo and hasOne associations with hasMany and hasAndBelongsToMany associations:
+The Behavior makes a difference between belongsTo/hasOne associations and hasMany/hasAndBelongsToMany associations:
 * with belongsTo and hasOne associations, the ActiveRecord object pointed by the association is retrieved, and you can use
-it directly: e.g. $post->Writer->WriterGroup
-* with hasMany and hasAndBelongsToMany associations, the ActiveRecordAssociation object is retrieved. The class of this object implements the IteratorAggregate, Countable, ArrayAccess interfaces so that you can use it as an array:
-e.g.:  
-foreach ($post->Comments as $comment);  
-count($post->Comments);  
-$comments = $post->Comments; $first_comment = $comments[0];  
+it directly: e.g. $post->Writer->WriterGroup->name
+* with hasMany and hasAndBelongsToMany associations, the ActiveRecordAssociation object is retrieved. The class of this object implements the IteratorAggregate, Countable and ArrayAccess interfaces so that you can use it as an array:
+
+  * foreach ($post->Comments as $comment) {}
+  * count($post->Comments);  
+  * $comments = $post->Comments; $first_comment = $comments[0];  
+
+
 But also, the ActiveRecordAssociation class has 3 functions:
   * $comments->add($new_comment);
   * $comments->remove($first_comment);
@@ -45,7 +47,7 @@ In order for the developer to clearly see the difference beween the 2 kinds of a
 
 Extend ActiveRecord class
 -------------------------
-Per default, the object you retrieve is of the class ActiveRecord. But you can of course extend this class and make a special one for one model.
+Per default, the object you retrieve is of the class ActiveRecord. But you can of course extend this class for one model.
 Per default, the behavior will look for a class in the subfolder Model\ActiveRecord with name 'AR<model name>', e.g.: ARPost or ARComment (the prefix 'AR' and the subfolder name can be changed in the bahavior constructor options).
 In the file ARPost.php:
 
@@ -74,12 +76,12 @@ You can also create new object:
        'message' => 'OK',
        'Writer' => $writer));
 
-Here it becomes to be quite nice: in place of telling that the writer_id of the post should $writer->id, you can directly say 'Writer' => $writer
+Here it becomes to be quite nice: in place of telling that the writer_id of the post should be `$writer->id`, you can directly say `'Writer' => $writer`
 You can also do:
 
     $post->Comments = array($comment);
     
-This will set automatically the $comment->post_id to the right one. 
+This will set automatically the `$comment->post_id` to the right one. 
 
 Useful functions
 ----------------
@@ -113,7 +115,7 @@ Extending even more
 -------------------
 I needed also a possiblility to have subclasses of ActiveRecord. For example I had an Action model, but I needed to define subclasses for each kind of action. A subclass action may use a (sub) model or not.
 For this I told the behavior to check whether the Model has the function getActiveRecordProperties(), and if yes it calls it before it builds a new ActiveRecord.
-This function tells the behavior what is the real ActiveAcion name it must called, with which model and with which data. Here an example:
+This function tells the behavior what is the real ActiveAction name it must call, with which model and with which data. Here an example:
 
 My model Action has a column type. This column will determine which kind of ActiveRecord class it must call.
 Then in the Action model, I have added this function:
@@ -132,7 +134,7 @@ My ARAction looks like this:
         abstract public function execute(ARUserState $user_state, $parameter);
     }
 
-And a subaction looks like that:
+The SendEmail subaction looks like that:
 
     class ARSendEmailAction extends ARAction {
        public function execute(ARUserState $user_state, $parameter) {
@@ -140,7 +142,7 @@ And a subaction looks like that:
        }
     }
     
-Then if I have record in my Action table with type 'SendEmail', Action->find() returns an object of Class ARSendEmailAction.
+Then if I have a record in my Action table with type 'SendEmail', Action->find() returns an object of Class ARSendEmailAction. When calling execute(), it will call the right one that will send an email.
 Here the ARSendEmailAction uses the same model as ARAction, but if needed I could have set it to another one.
 
 
