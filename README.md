@@ -61,11 +61,9 @@ If you need to use the constructor:
     }
     ?>
     <?php
-    App::import('Model\Behavior', 'ActiveRecord');
-    
-    class ARTPost extends ActiveRecord {
-        public $var;
-        public function func() {...}
+    public function __construct(array $record, array $options = array()) {    
+        parent::__construct($record, $options);
+        ...
     }
     ?>
 
