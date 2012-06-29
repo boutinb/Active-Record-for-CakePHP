@@ -60,7 +60,8 @@ If you need to use the constructor:
        ...
     }
     ?>
-    App::import('Model\Behavior', 'ActiveRecord');
+In the file ARPost.php:
+    <?php
 
 
 Then you can use $post->var and $post->func() in your code.  
