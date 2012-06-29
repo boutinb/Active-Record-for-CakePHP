@@ -22,7 +22,7 @@ When you retrieve an object record, you can use it in this way: assume that you 
 * Comment (message) belongsTo Post
 * Tag (name) hasAndBelongsToMany Posts
 
-Call for example find('first') to retrieve a Post then:
+Call find('first') of find('all') to retrieve the Post records:
 * $message = $post->message : this retrieves the message of the post
 * $post->message = 'Hallo' : this updates the message of the post
 * $writer = $post->Writer : this retrieves the writer ActiveRecord object
@@ -105,9 +105,45 @@ Morevover saveAll() takes care that the records are saved in the right order. Fo
     $post->Comment = array($comment);
     ActiveRecord::saveAll();
     
-Then saveAll() takes care that $post is created first so that its id can be set to $comment->post_id
+Then saveAll() takes care that $post is created first so that its id can be set to $comment->post_id.  
 
+What is really nice with this Active Record pattern, is that you don't need anymore to bother about the keys and how you should construct the associated arrays to be sure that cakePHP will save correctly your data (especially with hasAndBelongsToMany associations!)
+
+Extending even more
+-------------------
+I needed also a possiblility to have subclasses of ActiveRecord. For example I had an Action model, but I needed to define subclasses for each kind of action. A subclass action may use a (sub) model or not.
+For this I told the behavior to check whether the Model has the function getActiveRecordProperties(), and if yes it calls it before it builds a new ActiveRecord.
+This function tells the behavior what is the real ActiveAcion name it must called, with which model and with which data. Here an example:
+
+My model Action has a column type. This column will determine which kind of ActiveRecord class it must call.
+Then in the Action model, I have added this function:
+
+    public function getActiveRecordProperties(&$record) {
+      $type = $record[$this->alias]['type'];
+      $active_record_name = 'AR' . $type . 'Action';
+      $model = $this;
+      App::import('Model\ActiveRecord', $active_record_name);
+      return array('active_record_name' => $active_record_name, 'record' => $record, 'model' => $model);
+    }
     
+My ARAction looks like this:
+
+    abstract class ARAction extends AppActiveRecord {
+        abstract public function execute(ARUserState $user_state, $parameter);
+    }
+
+And a subaction looks like that:
+
+    class ARSendEmailAction extends ARAction {
+       public function execute(ARUserState $user_state, $parameter) {
+           ....
+       }
+    }
+    
+Then if I have record in my Action table with type 'SendEmail', Action->find() returns an object of Class ARSendEmailAction.
+Here the ARSendEmailAction uses the same model as ARAction, but if needed I could have set it to another one.
+
+
 
 
 
