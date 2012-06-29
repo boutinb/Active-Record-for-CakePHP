@@ -63,6 +63,13 @@ If you need to use the constructor:
 
 In the file ARPost.php:
     <?php
+    App::import('Model\Behavior', 'ActiveRecord');
+    
+    class ARTPost extends ActiveRecord {
+        public $var;
+        public function func() {...}
+    }
+    ?>
 
 
 Then you can use $post->var and $post->func() in your code.  
