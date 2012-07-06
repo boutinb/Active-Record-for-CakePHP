@@ -305,17 +305,19 @@ class _ActiveRecordAssociation {
          }
          case 'hasMany':
          case 'hasAndBelongsToMany': {
-            if (!$reference_model->Behaviors->attached('Containable')) {
-               $reference_model->Behaviors->load('Containable');
-            }
-            // We can never be sure that all records are stored in the pool. So we must query them.
-            $result = $reference_model->find('first',
-                    array(
-                       'conditions' => array($reference_model->alias . '.' . $reference_model->primaryKey => $reference_record[$reference_model->primaryKey]),
-                       'contain' => array($this->name),
-                       'activeRecord' => false));
-            foreach ($result[$this->name] as $related_record) {
-               $related_active_records[] = ActiveRecord::getActiveRecord($this->model, $related_record);
+            if (isset($reference_record[$reference_model->primaryKey])) {
+               if (!$reference_model->Behaviors->attached('Containable')) {
+                  $reference_model->Behaviors->load('Containable');
+               }
+               // We can never be sure that all records are stored in the pool. So we must query them.
+               $result = $reference_model->find('first',
+                       array(
+                          'conditions' => array($reference_model->alias . '.' . $reference_model->primaryKey => $reference_record[$reference_model->primaryKey]),
+                          'contain' => array($this->name),
+                          'activeRecord' => false));
+               foreach ($result[$this->name] as $related_record) {
+                  $related_active_records[] = ActiveRecord::getActiveRecord($this->model, $related_record);
+               }
             }
          }
       }
@@ -565,6 +567,10 @@ class ActiveRecord {
 
    private function _resetState() {
       $this->_changed = $this->_created = $this->_deleted = false;
+      $this->_original_record = array();
+      foreach ($this->_record as $key => $value) {
+         $this->_original_record[$key] = $value;
+      }
    }
 
    public function refresh($record = null, $alias = null) {
@@ -676,6 +682,11 @@ class ActiveRecord {
       if ($result) {
          $this->_record = $result[$this->_model->alias];
          unset(self::$active_records_to_be_created[$this->_internal_id]);
+         if (!isset(self::$active_records_pool[$this->_model->name])) {
+            self::$active_records_pool[$this->_model->name] = array('records' => array(), 'model' => $this->_model, 'data_source_name' => $this->_model->useDbConfig);
+         }
+         $id = $this->_record[$this->_model->primaryKey];
+         self::$active_records_pool[$this->_model->name]['records'][$id] = $this;
          $this->_resetState();
          foreach($this->_foreign_keys_not_yet_set as $foreign_key_to_be_set) {
             $foreign_key_to_be_set['association']->setForeignKey($foreign_key_to_be_set['active_record']);
