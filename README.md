@@ -90,10 +90,15 @@ Useful functions
 ----------------
 I realize that when using hasMany (or hasOne association), when you do
 
-    $post->Comments->remove($comment);
+    $post->Comments->remove($comment);  
+    
+or  
+
+    $post->Comments = null;  
+
     
 You want not only to remove the $comment from $post, but most of the time you want to delete $comment. 
-I thought it would quite handy if this is done automatically. For this, if you set in the association definition 'deleteWhenNotAssociated' to true, the behavior will automatically delete all records that are removed from the association.
+I thought it would be quite handy if this is done automatically. For this, if you set in the association definition 'deleteWhenNotAssociated' to true, the behavior will automatically delete all records that are removed from the association.
 
 The behavior offers also the possibility to delete, refresh and undo an ActiveRecord:
 
