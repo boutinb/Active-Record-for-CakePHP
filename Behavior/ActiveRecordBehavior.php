@@ -59,8 +59,9 @@ class _ActiveRecordAssociation {
          }
       } else {
          foreach($this->associated_active_records as $old_active_record) {
-            $this->removeAssociatedRecord($old_active_record);
+            $this->removeAssociatedRecord($old_active_record, false);
          }
+         $this->associated_active_records = array();
          foreach($active_records as $new_active_record) {
             $this->addAssociatedRecord($new_active_record);
          }
@@ -102,6 +103,16 @@ class _ActiveRecordAssociation {
                $associated_record = &$active_record->getRecord();
                $reference_record = $this->reference_active_record->getRecord();
                if (isset($reference_record[$this->reference_active_record->getModel()->primaryKey])) {
+                  if (!empty($associated_record[$this->definition['foreignKey']])) {
+                     // The record is associated with another record: find this record, and remove the association
+                     $active_record_associated_with_active_record = ActiveRecord::findActiveRecordInPool($this->reference_active_record->getModel(), $associated_record[$this->definition['foreignKey']]);
+                     if ($active_record_associated_with_active_record) {
+                        $assoctiation = $active_record_associated_with_active_record->{$this->name};
+                        if ($assoctiation) {
+                           $assoctiation->remove($active_record);
+                        }
+                     }
+                  }
                   $associated_record[$this->definition['foreignKey']] = $reference_record[$this->reference_active_record->getModel()->primaryKey];
                } else {
                   $this->reference_active_record->addForeignKeyToBeSet($this, $active_record);
@@ -125,7 +136,7 @@ class _ActiveRecordAssociation {
       $this->changed = true;
    }
 
-   public function removeAssociatedRecord(ActiveRecord $active_record) {
+   public function removeAssociatedRecord(ActiveRecord $active_record, $reset_keys = true) {
       $checked = false;
       $record_to_be_removed = &$active_record->getRecord();
       foreach ($this->associated_active_records as $key => $associated_active_record) {
@@ -146,18 +157,22 @@ class _ActiveRecordAssociation {
                break;
             case 'hasOne':
             case 'hasMany':
-               if (!empty($this->definition['deleteWhenNotAssociated'])) {
-                  $associated_active_record->delete();
-               }
                $associated_record = &$active_record->getRecord();
                $associated_record[$this->definition['foreignKey']] = null;
                unset($this->associated_active_records[$key]);
-               $active_record->setChanged();
+               if (!empty($this->definition['deleteWhenNotAssociated'])) {
+                   $active_record->delete(true);
+               } else {
+                   $active_record->setChanged();               
+               }
                break;
             case 'hasAndBelongsToMany':
                unset($this->associated_active_records[$key]);
                $this->reference_active_record->setChanged();
                break;
+         }
+         if ($reset_keys) {
+            $this->associated_active_records = array_values($this->associated_active_records);
          }
          $this->changed = true;
       }
@@ -395,6 +410,7 @@ class ActiveRecord {
    private $_changed = false;
    private $_created = false;
    private $_deleted = false;
+   private $_deleted_due_to_removed_from_association = false;
    private $_foreign_keys_not_yet_set = array();
    private $_internal_id;
    private $_direct_delete = false;
@@ -427,9 +443,12 @@ class ActiveRecord {
    }
 
    public static function getActiveRecordProperties(Model $model, &$record) {
+      $result = false;
       if (method_exists($model, 'getActiveRecordProperties')) {
          $result = $model->getActiveRecordProperties($record);
-      } else {
+      }
+
+      if ($result === false) {
          $active_record_name = ActiveRecordBehavior::$prefix . $model->name;
          App::import('Model' . ActiveRecordBehavior::$subfolder, $active_record_name);
          if (!class_exists($active_record_name)) {
@@ -566,7 +585,7 @@ class ActiveRecord {
    }
 
    private function _resetState() {
-      $this->_changed = $this->_created = $this->_deleted = false;
+      $this->_changed = $this->_deleted = $this->_created = $this->_deleted_due_to_removed_from_association = false;
       $this->_original_record = array();
       foreach ($this->_record as $key => $value) {
          $this->_original_record[$key] = $value;
@@ -615,6 +634,10 @@ class ActiveRecord {
 
    public function setChanged($changed = true) {
       $this->_changed = $changed;
+      if ($changed && $this->_deleted_due_to_removed_from_association) {
+         $this->_deleted = false;
+         $this->_deleted_due_to_removed_from_association = false;
+      }
    }
 
    public function isCreated() {
@@ -646,7 +669,7 @@ class ActiveRecord {
          $this->_associations[$name]->setAssociatedRecords($value);
       } else if (array_key_exists($name, $this->_record)) {
          $this->_record[$name] = $value;
-         $this->_changed = true;
+         $this->setChanged();
       } else {
          throw new ActiveRecordException('Undefined property via __set(): ' . $name);
       }
@@ -656,9 +679,12 @@ class ActiveRecord {
       return array_key_exists($name, $this->_associations) || array_key_exists($name, $this->_record);
    }
 
-   public function delete() {
+   public function delete($from_association = false) {
       $this->_deleted = true;
       $this->_changed = true;
+      if ($from_association) {
+         $this->_deleted_due_to_removed_from_association = true;
+      }
    }
 
    public function undo() {
@@ -673,7 +699,7 @@ class ActiveRecord {
          unset(self::$active_records_to_be_created[$this->_internal_id]);
       }
 
-      $this->_changed = $this->_deleted = $this->_created = false;
+      $this->_resetState();
    }
 
    private function _create() {
