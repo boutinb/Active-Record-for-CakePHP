@@ -9,7 +9,7 @@ So I first built a behavior that allows me to retrieve objects in place of assoc
 I have tested this only with cakePHP 2.x
 
 To use it:
-* Copy the ActiveRecordBehavior.php in your Behavior folder
+* Copy the Model\Behavior\ActiveRecordBehavior.php in your Behavior folder
 * Tell your model to use it: $actsAs = array('ActiveRecord' => array(<options>))
 * When you use a find('all') or find('first) function, add the option 'activeRecord' => true
 
